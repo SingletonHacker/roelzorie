@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace TextToCsv
 {
@@ -6,23 +7,37 @@ namespace TextToCsv
     {
         private static void Main(string[] args)
         {
-            foreach (var food in args)
-            {
-                var foodLwr = food.ToLower();
+            var vehicles = new List<Vehicle>();
 
-                if (foodLwr == "kaas" || foodLwr == "worst" || foodLwr == "oude kaas")
+            vehicles.Add(new Car("Ferri", Color.Blue, 50));
+            vehicles.Add(new Car("Daewoo", Color.Red, 100));
+            vehicles.Add(new Boat("Supertankert", Color.Purple, 510, 32));
+
+            var winner = Race(vehicles);
+
+            Console.WriteLine($"{winner.Name} has won the race");
+
+            Console.WriteLine("All participants are transporting people now");
+            vehicles.ForEach(v =>
+            {
+                Console.WriteLine($"I am fucking slow and i go at {v.CalculateDurationInHours(50000000)}");
+                v.Transport();
+            });
+        }
+
+        private static Vehicle Race(List<Vehicle> vehicles)
+        {
+            Vehicle fastestVehicle = vehicles[0];
+
+            for (var i = 1; i < vehicles.Count; i++)
+            {
+                if (fastestVehicle.TopSpeedKm < vehicles[i].TopSpeedKm)
                 {
-                    Console.WriteLine($"Hallo allemaal, {foodLwr} met mosterd");
-                }
-                else if (foodLwr == "komkommer" || foodLwr == "paprika" || foodLwr == "oude kaas")
-                {
-                    Console.WriteLine($"Hallo allemaal, {foodLwr} heksenkaas");
-                }
-                else
-                {
-                    Console.WriteLine($"{foodLwr} zonder mosterd en heksenkaas");
+                    fastestVehicle = vehicles[i];
                 }
             }
+
+            return fastestVehicle;
         }
     }
 }
