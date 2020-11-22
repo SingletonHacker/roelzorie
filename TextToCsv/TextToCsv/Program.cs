@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace TextToCsv
 {
@@ -7,37 +8,50 @@ namespace TextToCsv
     {
         private static void Main(string[] args)
         {
-            var vehicles = new List<Vehicle>();
+            var directory = @"C:\git\Personal\roelzorie\TextToCsv\TextToCsv\bin\Debug\netcoreapp3.1\";
+            var fileName = Path.Combine(directory, "tekst.txt");
 
-            vehicles.Add(new Car("Ferri", Color.Blue, 50));
-            vehicles.Add(new Car("Daewoo", Color.Red, 100));
-            vehicles.Add(new Boat("Supertankert", Color.Purple, 510, 32));
+            var txtFilePath = Path.Combine(directory, fileName);
 
-            var winner = Race(vehicles);
+            var file = ReadFile(txtFilePath);
+            var newFile = Transform(file);
 
-            Console.WriteLine($"{winner.Name} has won the race");
-
-            Console.WriteLine("All participants are transporting people now");
-            vehicles.ForEach(v =>
-            {
-                Console.WriteLine($"I am fucking slow and i go at {v.CalculateDurationInHours(50000000)}");
-                v.Transport();
-            });
+            File.WriteAllLines(Path.Combine(directory, Path.GetFileNameWithoutExtension(txtFilePath) + ".csv"), newFile);
         }
 
-        private static Vehicle Race(List<Vehicle> vehicles)
+        private static List<string> ReadFile(string path)
         {
-            Vehicle fastestVehicle = vehicles[0];
-
-            for (var i = 1; i < vehicles.Count; i++)
+            var lines = new List<string>();
+            using (var streamReader = new StreamReader(path))
             {
-                if (fastestVehicle.TopSpeedKm < vehicles[i].TopSpeedKm)
+                var line = streamReader.ReadLine();
+                while (line != null)
                 {
-                    fastestVehicle = vehicles[i];
+                    lines.Add(line);
+                    line = streamReader.ReadLine();
                 }
             }
+            return lines;
+        }
 
-            return fastestVehicle;
+        private static List<string> Transform(List<string> contents)
+        {
+            var newFile = new List<string>();
+
+            foreach (var line in contents)
+            {
+                var sb = new StringBuilder();
+                var columns = line.Split(' ');
+
+                foreach (var column in columns)
+                {
+                    sb.Append(column + ',');
+                }
+
+                newFile.Add(sb.ToString());
+            }
+
+            return newFile;
         }
     }
 }
