@@ -8,9 +8,6 @@ namespace PdfToCsv
     {
         private static void Main(string[] args)
         {
-            //var inPath = @"C:\git\Personal\assets\factuur.txt";
-            //var outPath = @"C:\git\Personal\assets\factuur.csv";
-
             if (args.Length != 3)
             {
                 LogInfo("Could not find enough command line arguments");
@@ -36,20 +33,26 @@ namespace PdfToCsv
 
                 var pdfParser = new PdfParsercs();
                 var writer = new ExcelWriter();
-
-                LogInfo($"Parsing {file}");
-                var lines = pdfParser.Parse(file);
-
-                LogInfo($"Writing {outPath}");
-                writer.Write(outPath, lines);
-
-                if (removeParsedFile)
+                try
                 {
-                    LogInfo($"Removing {file}");
-                    File.Delete(file);
-                }
+                    LogInfo($"Parsing {file}");
+                    var lines = pdfParser.Parse(file);
 
-                LogInfo($"-----------------------------");
+                    LogInfo($"Writing {outPath}");
+                    writer.Write(outPath, lines);
+
+                    if (removeParsedFile)
+                    {
+                        LogInfo($"Removing {file}");
+                        File.Delete(file);
+                        LogInfo($"-----------------------------");
+                    }
+                }
+                catch (Exception e)
+                {
+                    LogError($"Fatal exception occured. Could not process {file}");
+                    LogError(e.Message);
+                }
             }
         }
 
@@ -65,6 +68,16 @@ namespace PdfToCsv
             var defaultColor = Console.ForegroundColor;
 
             Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(line);
+
+            Console.ForegroundColor = defaultColor;
+        }
+
+        private static void LogError(string line)
+        {
+            var defaultColor = Console.ForegroundColor;
+
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(line);
 
             Console.ForegroundColor = defaultColor;
