@@ -8,9 +8,9 @@ namespace PdfToCsv
     {
         private readonly List<string> _file = new List<string>();
 
-        public void Handle()
+        public void Parse()
         {
-            var path = "";
+            var path = @"C:\git\Personal\assets\factuur.txt";
 
             using (var sr = new StreamReader(path))
             {
@@ -28,24 +28,20 @@ namespace PdfToCsv
                 throw new ArgumentException("could not parse file");
             }
 
-            var index = FindStartIndex();
+            var startSearchArea = FindStartIndex();
+            var endSearchArea = FindEndOfSections(startSearchArea);
 
-            var firstLineNumber = 1;
-
-            var firstSection = FindStartOfSection(index, firstLineNumber);
-            var endOfSections = FindEndOfSections(firstSection);
+            var sections = FindSections(startSearchArea, endSearchArea);
         }
 
         private int FindEndOfSections(int searchFromIndex)
         {
-            var index = 0;
             for (int i = searchFromIndex; i < _file.Count; i++)
             {
-                if (_file[i].StartsWith("Totaal nettowaarde:"))
+                if (_file[i].StartsWith("Totaal nettowaarde"))
                 {
-                    return index;
+                    return i - 1;
                 }
-                index++;
             }
 
             throw new ArgumentException("Could not find end of sections");
@@ -86,12 +82,62 @@ namespace PdfToCsv
 
             for (int i = searchFromIndex; i < _file.Count; i++)
             {
-                if (_file[i].StartsWith(nextOrderNumber) || _file[i].StartsWith(alternativeEnd))
+                if (_file[i].StartsWith(alternativeEnd))
                 {
-                    return i;
+                    for (int iReverse = i; iReverse > 0; iReverse--)
+                    {
+                        // Reverse search because somethimes the "end of section" is preceded by
+                        // adress information and somethimes not
+                        if (_file[iReverse].StartsWith(" "))
+                        {
+                            return iReverse;
+                        }
+                        if (iReverse == 1)
+                        {
+                            throw new ArgumentException("Reverse search failed");
+                        }
+                    }
+                }
+                if (_file[i].StartsWith(nextOrderNumber))
+                {
+                    return i - 1;
                 }
             }
             throw new ArgumentException("Could not find end of section");
+        }
+
+        private List<Section> FindSections(int startOfSearchArea, int endOfSearchArea)
+        {
+            var sections = new List<Section>();
+
+            var currentLineNumber = 1;
+
+            var startOfSection = FindStartOfSection(startOfSearchArea, currentLineNumber);
+            var endOfLastSection = FindEndOfSection(startOfSection, currentLineNumber);
+            sections.Add(CreateSection(startOfSection, endOfLastSection));
+
+            while (endOfLastSection + 1 != endOfSearchArea)
+            {
+                startOfSection = FindStartOfSection(endOfLastSection, ++currentLineNumber);
+                endOfLastSection = FindEndOfSection(startOfSection, currentLineNumber);
+                if (endOfLastSection + 1 == endOfSearchArea)
+                {
+                    sections.Add(CreateSection(startOfSection, endOfLastSection + 1));
+                }
+                sections.Add(CreateSection(startOfSection, endOfLastSection));
+            }
+
+            return sections;
+        }
+
+        private Section CreateSection(int start, int end)
+        {
+            return new Section
+            {
+                StartIndex = start,
+                EndIndex = end,
+                Data = _file.GetRange(start, end - start + 1)
+            };
         }
     }
 }

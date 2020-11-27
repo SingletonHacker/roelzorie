@@ -1,12 +1,12 @@
-﻿using System;
-
-namespace PdfToCsv
+﻿namespace PdfToCsv
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var pdfParser = new PdfParsercs();
+
+            pdfParser.Parse();
         }
     }
 }
