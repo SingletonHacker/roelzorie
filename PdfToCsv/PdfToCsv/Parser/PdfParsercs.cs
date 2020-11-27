@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace PdfToCsv
+namespace PdfToCsv.Parser
 {
     public class PdfParsercs
     {
         private readonly List<string> _file = new List<string>();
 
-        public void Parse()
+        public List<OutputLine> Parse(string path)
         {
-            var path = @"C:\git\Personal\assets\factuur.txt";
+            var output = new List<OutputLine>();
 
             using (var sr = new StreamReader(path))
             {
@@ -32,6 +32,20 @@ namespace PdfToCsv
             var endSearchArea = FindEndOfSections(startSearchArea);
 
             var sections = FindSections(startSearchArea, endSearchArea);
+
+            var sectionParser = new SectionParser();
+
+            var docId = GetDocumentNumber();
+
+            foreach (var section in sections)
+            {
+                var outLine = sectionParser.Parse(section);
+
+                outLine.DocumentNumber = docId;
+                output.Add(outLine);
+            }
+
+            return output;
         }
 
         private int FindEndOfSections(int searchFromIndex)
@@ -120,10 +134,6 @@ namespace PdfToCsv
             {
                 startOfSection = FindStartOfSection(endOfLastSection, ++currentLineNumber);
                 endOfLastSection = FindEndOfSection(startOfSection, currentLineNumber);
-                if (endOfLastSection + 1 == endOfSearchArea)
-                {
-                    sections.Add(CreateSection(startOfSection, endOfLastSection + 1));
-                }
                 sections.Add(CreateSection(startOfSection, endOfLastSection));
             }
 
@@ -138,6 +148,27 @@ namespace PdfToCsv
                 EndIndex = end,
                 Data = _file.GetRange(start, end - start + 1)
             };
+        }
+
+        private string GetDocumentNumber()
+        {
+            var index = -1;
+            for (int i = 0; i < _file.Count; i++)
+            {
+                if (_file[i].StartsWith("Documentnummer"))
+                {
+                    index = i + 1;
+                }
+            }
+
+            if (index == -1)
+            {
+                throw new ArgumentException("Could not find start of section");
+            }
+
+            var line = _file[index].Trim();
+
+            return line.Substring(0, 10);
         }
     }
 }
